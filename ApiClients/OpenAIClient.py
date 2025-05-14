@@ -1,12 +1,13 @@
-import LLMClient
 import openai
 import json
+from ApiClients.LLMClient import LLMClient
 
 class OpenAIClient(LLMClient):  
-  def _init_(self, api_key : str, model : str):
-    self.allowed_models = openai.models.list()
-    super()._init_(api_key, model)
-    self.client = openai.OpenAI(api_key= self.api_key, model = self.model)
-
-  def convert_prompt_to_object(self, prompt:str) -> list[dict]:
-    json_object = json.loads(prompt)
+  def __init__(self, api_key : str):
+    super()._init_(api_key)
+    self.name = "OpenAI"
+    self.client = openai.OpenAI(api_key= self.api_key)
+    models = self.client.models.list()
+    self.allowed_models = []
+    for model in models.data:
+      self.allowed_models.append(model.id)

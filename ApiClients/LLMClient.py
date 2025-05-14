@@ -4,12 +4,17 @@ from google import genai
 
 class LLMClient:
   allowed_models = []
-  def _init_(self, api_key : str, model : str):
+  name = ""
+  model = ""
+  def _init_(self, api_key : str):
     self.api_key = api_key
+
+  def set_model(self, model:str):
+    if model not in self.allowed_models:
+      raise ValueError(f"Model {self.model} is not allowed. Allowed models are: {self.allowedModels}")\
+      
     self.model = model
-    if self.model not in self.allowed_models:
-      raise ValueError(f"Model {self.model} is not allowed. Allowed models are: {self.allowedModels}")
-    
+  
   def generate_response(self, prompt: str) -> str:
     """
     Generate a response from the LLM using the provided prompt.
