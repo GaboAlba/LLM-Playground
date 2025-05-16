@@ -11,7 +11,6 @@ if __name__ == "__main__":
     openai_client = OpenAIClient(api_key=openai_api_key)
     google_client = GoogleAiClient(api_key=google_api_key)
 
-
     # Create the GUI
     client_list = [openai_client, google_client]
     app = TkGui(client_list)

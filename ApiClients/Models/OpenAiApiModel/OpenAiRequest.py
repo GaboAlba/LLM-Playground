@@ -1,8 +1,10 @@
-from OpenAiMessage import OpenAiMessage
-from dataclasses import dataclass
+from .OpenAiMessage import OpenAiMessage
+from ApiClients.Models.LLMRequest import LLMRequest
+from dataclasses import dataclass, field
+from typing import List
 
 @dataclass
-class OpenAiRequest:
+class OpenAiRequest(LLMRequest):
     """OpenAI API request model.
 
     Attributes:
@@ -16,10 +18,10 @@ class OpenAiRequest:
     """
 
     model: str
-    messages: list[OpenAiMessage]
+    messages: List[OpenAiMessage] = field(default_factory=list)
     temperature: float = 0.7
     max_completion_tokens: int = 1000
     top_p: float = 1.0
-    tools: list = []
+    tools: List = field(default_factory=list)
     frequency_penalty: float = 0.0
     presence_penalty: float = 0.0

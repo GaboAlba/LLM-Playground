@@ -1,6 +1,9 @@
 import openai
 import json
+from .Utils import Utils
 from ApiClients.LLMClient import LLMClient
+from .Models.OpenAiApiModel.OpenAiMessage import OpenAiMessage
+from .Models.OpenAiApiModel.OpenAiRequest import OpenAiRequest
 
 class OpenAIClient(LLMClient):  
   def __init__(self, api_key : str):
@@ -11,3 +14,51 @@ class OpenAIClient(LLMClient):
     self.allowed_models = []
     for model in models.data:
       self.allowed_models.append(model.id)
+
+  def generate_response(self, request: OpenAiRequest) -> str:
+    try:
+      messages = []
+      for msg in request.messages:
+        messages.append(msg.to_dict())
+      response = self.client.chat.completions.create(
+        model=request.model,
+        messages = messages,
+        temperature = request.temperature,
+        max_completion_tokens = request.max_completion_tokens,
+        top_p = request.top_p,
+        frequency_penalty = request.frequency_penalty,
+        presence_penalty = request.presence_penalty
+      )
+
+      return response.choices[0].message.content
+    except Exception as e:
+      print(f"Call to OpenAI API failed: {e}")
+      return ""
+    
+  def convert_prompt_to_object(self, prompt:str) -> list[dict]:
+    """
+    Convert the prompt to a list of OpenAiMessage objects.
+    """
+    print("Hit the child class")
+    try:
+      # Split the prompt into sections based on the role tags
+      messages = Utils.convert_prompt_to_json(prompt)
+      openai_messages = [OpenAiMessage(role=message['role'], content=message['content']) for message in messages]
+      return openai_messages
+    except json.JSONDecodeError as e:
+      print(f"Failed to decode JSON: {e}")
+      return []
+    
+  def build_request(self, model:str, messages:list[OpenAiMessage], temperature:float, max_tokens:int, top_p:float, frequency_penalty:float, presence_penalty:float) -> OpenAiRequest:
+    """
+    Build the OpenAiRequest object.
+    """
+    return OpenAiRequest(
+      model=model,
+      messages=messages,
+      temperature=temperature,
+      max_completion_tokens=max_tokens,
+      top_p=top_p,
+      frequency_penalty=frequency_penalty,
+      presence_penalty=presence_penalty
+    )

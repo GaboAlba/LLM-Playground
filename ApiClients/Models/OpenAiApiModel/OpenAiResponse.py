@@ -1,5 +1,6 @@
-from OpenAiMessage import OpenAiMessage
-from dataclasses import dataclass
+from .OpenAiMessage import OpenAiMessage
+from dataclasses import dataclass, field
+from typing import List
 
 @dataclass
 class OpenAiResponse:
@@ -18,5 +19,5 @@ class OpenAiResponse:
     object: str
     created: int
     model: str
-    choices: list[OpenAiMessage]
+    choices: List[OpenAiMessage] = field(default_factory=list)
     usage: dict
