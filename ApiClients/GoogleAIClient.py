@@ -72,7 +72,7 @@ class GoogleAiClient(LLMClient):
       if msg.role == "system":
         system_message = msg.content
       else:
-        content_message += msg.content
+        content_message += msg.role + ":" + msg.content
     
     return GoogleAiRequest(
       model=model,
