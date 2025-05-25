@@ -4,8 +4,8 @@ import os
 class ApiKeysHandler:
     def __init__(self, api_keys_file = "api_keys.yaml"):
         self.api_keys_default = {
-            "OpenAI": "NULL",
-            "GoogleAI": "NULL"
+            "OpenAI": "",
+            "GoogleAI": ""
         }
         self.api_keys_file = api_keys_file
         self.load_api_keys()

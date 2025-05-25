@@ -78,7 +78,9 @@ class TkGui:
     entry.pack(pady=10)
 
     # Load the API keys
-    self.apiKeys = self.apiKeysHandler.load_api_keys()
+    self.apiKeysHandler.load_api_keys()
+    self.apiKeys = self.apiKeysHandler.api_keys
+    print(f"Path to API keys file: {self.apiKeysHandler.api_keys_file}")
     
     # Create a button to select the API keys file
     select_button = Button(self.api_keys_window, text="Select API Keys File", command=self.browse_api_keys_file)
@@ -88,15 +90,19 @@ class TkGui:
     openAI_label = Label(self.api_keys_window, text="OpenAI API Key:")
     openAI_label.pack(pady=10)
     key = self.apiKeys.get("OpenAI") if self.apiKeys else ""
+    print(f"OpenAI Key: {key}")
     self.openAI_entry = Entry(self.api_keys_window, show = key if key else "")
     self.openAI_entry.pack(pady=10)
+    self.openAI_entry.insert(0, key)
 
     # Create Google GenAI API Key entry
     GoogleAI_label = Label(self.api_keys_window, text="GoogleAI API Key:")
     GoogleAI_label.pack(pady=10)
     key = self.apiKeys.get("GoogleAI") if self.apiKeys else ""
+    print(f"GoogleAI Key: {key}")
     self.GoogleAI_entry = Entry(self.api_keys_window, show = key if key else "")
     self.GoogleAI_entry.pack(pady=10)
+    self.GoogleAI_entry.insert(0, key)
     
     # Create a button to save the API keys
     save_button = Button(self.api_keys_window, text="Save", command=self.save_api_keys)
@@ -167,13 +173,13 @@ class TkGui:
 
   def set_clients(self, openAiKey = "", googleAiKey = ""):
     # Set OpenAI API client with the Key
-    client = OpenAIClient(openAiKey if openAiKey is not "" else self.apiKeysHandler.get_api_key("OpenAI"))
-    self.apiKeysHandler.set_api_key(client.name, openAiKey if openAiKey is not "" else self.apiKeysHandler.get_api_key(client.name))
+    client = OpenAIClient(openAiKey if openAiKey != "" else self.apiKeysHandler.get_api_key("OpenAI"))
+    self.apiKeysHandler.set_api_key(client.name, openAiKey if openAiKey != "" else self.apiKeysHandler.get_api_key(client.name))
     self.clients.append(client)
 
     # Set Google AI API client with the key
-    client = GoogleAiClient(googleAiKey if googleAiKey is not "" else self.apiKeysHandler.get_api_key("GoogleAI"))
-    self.apiKeysHandler.set_api_key(client.name, googleAiKey if googleAiKey is not "" else self.apiKeysHandler.get_api_key(client.name))
+    client = GoogleAiClient(googleAiKey if googleAiKey != "" else self.apiKeysHandler.get_api_key("GoogleAI"))
+    self.apiKeysHandler.set_api_key(client.name, googleAiKey if googleAiKey != "" else self.apiKeysHandler.get_api_key(client.name))
     self.clients.append(client)
 
 
