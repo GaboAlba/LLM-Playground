@@ -1,17 +1,32 @@
+import yaml
 from tkinter import *
-from tkinter import ttk
+from tkinter import ttk, filedialog
 from ApiClients.LLMClient import LLMClient
+from ApiClients.OpenAIClient import OpenAIClient
+from ApiClients.GoogleAIClient import GoogleAiClient
+from ApiKeys.apiKeysHandler import ApiKeysHandler
+
 
 class TkGui:
-  def __init__(self, clients: list[LLMClient]):
+  def __init__(self):
     self.placeholderPromptText = "Enter your prompt here..."
     self.placeholderResultText = "Result will be displayed here..."
-    self.clients = clients
-    self.client = clients[0]
+    self.apiKeysHandler = ApiKeysHandler()
+    self.clients = []
+
+    # Create the UI
     self.root = Tk()
     self.root.title("LLM Playground")
     self.root.geometry("1920x1080")
     self.root.resizable(width=True, height=True)
+
+    self.menubar = Menu(self.root)
+    self.filemenu = Menu(self.menubar, tearoff=0)
+    self.menubar.add_cascade(label="File", menu=self.filemenu, font=("Helvetica", 16))
+    self.filemenu.add_command(label="API keys", command = self.show_api_keys_window)
+    self.filemenu.add_command(label="Refresh", command= self.refresh)
+
+    self.root.config(menu=self.menubar)
 
     self.leftFrame = Frame(self.root)
     self.leftFrame.pack(side=LEFT, fill=Y, padx=20, pady=30)
@@ -25,7 +40,7 @@ class TkGui:
     self.bottomLeftFrame = Frame(self.leftFrame)
     self.bottomLeftFrame.pack(side=BOTTOM, fill=X, padx=20, pady=30)
 
-    self.Title = Label(self.root, text="LLM Playground", font=("Helvetica", 24))
+    self.Title = Label(self.topLeftFrame, text="LLM Playground", font=("Helvetica", 24))
     self.Title.pack(pady=20)
 
     self.PromptBoxTitle = Label(self.topLeftFrame, text="Prompt", font=("Helvetica", 16))
@@ -50,6 +65,65 @@ class TkGui:
     self.ResultBox.bind("<FocusOut>", lambda event: self.on_focus_out())
     self.ResultBox.config(fg="grey")
 
+  def show_api_keys_window(self):
+    self.api_keys_window = Toplevel(self.root)
+    self.api_keys_window.title("API Keys")
+    self.api_keys_window.geometry("400x400")
+    self.api_keys_window.resizable(width=False, height=False)
+
+    # Create a label for the API keys directory
+    label = Label(self.api_keys_window, text="API Keys Directory:")
+    label.pack(pady=10)
+    entry = Entry(self.api_keys_window)
+    entry.pack(pady=10)
+
+    # Load the API keys
+    self.apiKeys = self.apiKeysHandler.load_api_keys()
+    
+    # Create a button to select the API keys file
+    select_button = Button(self.api_keys_window, text="Select API Keys File", command=self.browse_api_keys_file)
+    select_button.pack(pady=20)
+
+    # Create OpenAI API key entry
+    openAI_label = Label(self.api_keys_window, text="OpenAI API Key:")
+    openAI_label.pack(pady=10)
+    key = self.apiKeys.get("OpenAI") if self.apiKeys else ""
+    self.openAI_entry = Entry(self.api_keys_window, show = key if key else "")
+    self.openAI_entry.pack(pady=10)
+
+    # Create Google GenAI API Key entry
+    GoogleAI_label = Label(self.api_keys_window, text="GoogleAI API Key:")
+    GoogleAI_label.pack(pady=10)
+    key = self.apiKeys.get("GoogleAI") if self.apiKeys else ""
+    self.GoogleAI_entry = Entry(self.api_keys_window, show = key if key else "")
+    self.GoogleAI_entry.pack(pady=10)
+    
+    # Create a button to save the API keys
+    save_button = Button(self.api_keys_window, text="Save", command=self.save_api_keys)
+    save_button.pack(pady=20)
+
+  
+  def save_api_keys(self):
+    self.clients = []
+    openAiKey = self.openAI_entry.get()
+    googleAiKey = self.GoogleAI_entry.get()
+    self.apiKeys = []
+    
+    # Create and set all available clients
+    self.set_clients(openAiKey=openAiKey, googleAiKey=googleAiKey)
+    
+    self.api_keys_window.destroy()
+    self.refresh()
+
+  def browse_api_keys_file(self):
+    file_path = filedialog.askopenfilename(filetypes=[("YAML files", "*.yaml"), ("All files", "*.*")])
+    if file_path:
+      self.apiKeysHandler.api_keys_file = file_path
+      self.apiKeysHandler.load_api_keys()
+      self.set_clients()
+      self.openAI_entry.insert(0,self.apiKeysHandler.get_api_key("OpenAI"))
+      self.GoogleAI_entry.insert(0, self.apiKeysHandler.get_api_key("GoogleAI"))
+
   def get_selected_client(self, selected_client_str: str):
       for client in self.clients:
         if client.name == selected_client_str:
@@ -63,6 +137,15 @@ class TkGui:
     self.LLMModelDropdown['values'] = []
     self.LLMModelDropdown['values'] = selected_client.allowed_models
     self.LLMModelDropdown.set(selected_client.allowed_models[0])
+
+    if (type(selected_client) == OpenAIClient):
+      self.TopKLabel.pack_forget()
+      self.TopKSlider.pack_forget()
+      self.TemperatureSlider.config(from_=0, to=1, resolution=0.1)
+    elif (type(selected_client) == GoogleAiClient):
+      self.TopKLabel.pack(pady=20)
+      self.TopKSlider.pack()
+      self.TemperatureSlider.config(from_=0, to=2, resolution=0.1)
 
   def on_focus_in(self):
     if self.PromptBox.get("1.0", "end-1c") == self.placeholderPromptText:
@@ -81,6 +164,17 @@ class TkGui:
     if self.ResultBox.get("1.0", "end-1c") == "":
       self.ResultBox.insert("1.0", self.placeholderResultText)
       self.ResultBox.config(fg="grey")
+
+  def set_clients(self, openAiKey = "", googleAiKey = ""):
+    # Set OpenAI API client with the Key
+    client = OpenAIClient(openAiKey if openAiKey is not "" else self.apiKeysHandler.get_api_key("OpenAI"))
+    self.apiKeysHandler.set_api_key(client.name, openAiKey if openAiKey is not "" else self.apiKeysHandler.get_api_key(client.name))
+    self.clients.append(client)
+
+    # Set Google AI API client with the key
+    client = GoogleAiClient(googleAiKey if googleAiKey is not "" else self.apiKeysHandler.get_api_key("GoogleAI"))
+    self.apiKeysHandler.set_api_key(client.name, googleAiKey if googleAiKey is not "" else self.apiKeysHandler.get_api_key(client.name))
+    self.clients.append(client)
 
 
   def submit(self):
@@ -102,6 +196,7 @@ class TkGui:
       messages = messages,
       temperature = self.TemperatureSlider.get(),
       max_tokens = int(self.MaxTokensEntry.get()),
+      top_k = int(self.TopPSlider.get()),
       top_p = self.TopPSlider.get(),
       frequency_penalty = self.FrequencyPenaltySlider.get(),
       presence_penalty = self.PresencePenaltySlider.get()
@@ -118,11 +213,17 @@ class TkGui:
       self.ResultBox.config(state=DISABLED)
       print(response)
   
-  def Refresh(self):
+  def refresh(self):
     self.root.destroy()
-    self.root.__init__()
+    self.__init__()
+    self.run()
 
   def run(self):
+    if not self.apiKeysHandler.are_all_api_keys_set():
+      self.show_api_keys_window()
+    else:
+      self.set_clients()
+      
     llm_client_names = [client.name for client in self.clients]
     self.LLMClientLabel = Label(self.rightFrame, text="LLM Client")
     self.LLMClientLabel.pack(pady=20)
@@ -131,12 +232,20 @@ class TkGui:
     self.LLMClientDropdown.pack()
     self.LLMClientDropdown.bind("<<ComboboxSelected>>", lambda event: self.update_model_list())
     
-    clientSelected = self.get_selected_client(self.LLMClientDropdown.get())
-    self.LLMModelLabel = Label(self.rightFrame, text="LLM Model")
-    self.LLMModelLabel.pack(pady=20)
-    self.LLMModelDropdown = ttk.Combobox(self.rightFrame, values= clientSelected.allowed_models, width=50)
-    self.LLMModelDropdown.set("gpt-3.5-turbo")
-    self.LLMModelDropdown.pack()
+    try:
+      clientSelected = self.get_selected_client(self.LLMClientDropdown.get())
+      self.LLMModelLabel = Label(self.rightFrame, text="LLM Model")
+      self.LLMModelLabel.pack(pady=20)
+      self.LLMModelDropdown = ttk.Combobox(self.rightFrame, values= clientSelected.allowed_models, width=50)
+      self.LLMModelDropdown.set("gpt-3.5-turbo")
+      self.LLMModelDropdown.pack()
+    except Exception as e:
+      print(f"Error: {e}")
+      self.LLMModelLabel = Label(self.rightFrame, text="LLM Model")
+      self.LLMModelLabel.pack(pady=20)
+      self.LLMModelDropdown = ttk.Combobox(self.rightFrame, values= [], width=50)
+      self.LLMModelDropdown.set("No models available")
+      self.LLMModelDropdown.pack()
 
     # Define Sliders for the LLM parameters
     self.TemperatureLabel = Label(self.rightFrame, text="Temperature")
@@ -144,6 +253,12 @@ class TkGui:
     self.TemperatureSlider = Scale(self.rightFrame, from_=0, to=1, resolution=0.1, orient=HORIZONTAL)
     self.TemperatureSlider.set(0.7)
     self.TemperatureSlider.pack()
+
+    self.TopKLabel = Label(self.rightFrame, text="Top K")
+    self.TopKLabel.pack(pady=20)
+    self.TopKSlider = Entry(self.rightFrame)
+    self.TopKSlider.insert(0, "3")
+    self.TopKSlider.pack()
 
     self.TopPLabel = Label(self.rightFrame, text="Top P")
     self.TopPLabel.pack(pady=20)
@@ -158,7 +273,6 @@ class TkGui:
     self.MaxTokensEntry.insert(0, "1000")
     self.MaxTokensEntry.pack()
     
-
     self.FrequencyPenaltyLabel = Label(self.rightFrame, text="Frequency Penalty")
     self.FrequencyPenaltyLabel.pack(pady=20)
     self.FrequencyPenaltySlider = Scale(self.rightFrame, from_=0, to=1, resolution=0.1, orient=HORIZONTAL)

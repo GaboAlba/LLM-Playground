@@ -7,7 +7,8 @@ class LLMClient:
   allowed_models = []
   name = ""
   model = ""
-  def _init_(self, api_key : str):
+  NOT_IMPLEMENTED_ERROR = "Subclasses must implement this method."
+  def _init_(self, api_key : str = "test"):
     self.api_key = api_key
   
   def generate_response(self, request:LLMRequest) -> str:
@@ -15,18 +16,18 @@ class LLMClient:
     Generate a response from the LLM using the provided prompt.
     This method should be overridden by subclasses.
     """
-    raise NotImplementedError("Subclasses must implement this method.")
+    raise NotImplementedError(self.NOT_IMPLEMENTED_ERROR)
   
   def convert_prompt_to_object(self, prompt:str):
     """
     Convert the prompt to a dictionary object.
     This method should be overridden by subclasses.
     """
-    raise NotImplementedError("Subclasses must implement this method.")
+    raise NotImplementedError(self.NOT_IMPLEMENTED_ERROR)
   
-  def build_request(self, model:str, messages:list, temperature:float, max_tokens:int, top_p:float, frequency_penalty:float, presence_penalty:float) -> LLMRequest:
+  def build_request(self, model:str, messages:list, temperature:float, max_tokens:int, top_k:int, top_p:float, frequency_penalty:float, presence_penalty:float) -> LLMRequest:
     """
     Build the request object for the LLM.
     This method should be overridden by subclasses.
     """
-    raise NotImplementedError("Subclasses must implement this method.")
+    raise NotImplementedError(self.NOT_IMPLEMENTED_ERROR)

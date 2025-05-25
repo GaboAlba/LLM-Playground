@@ -6,14 +6,18 @@ from .Models.OpenAiApiModel.OpenAiMessage import OpenAiMessage
 from .Models.OpenAiApiModel.OpenAiRequest import OpenAiRequest
 
 class OpenAIClient(LLMClient):  
-  def __init__(self, api_key : str):
+  def __init__(self, api_key : str = "test"):
     super()._init_(api_key)
     self.name = "OpenAI"
     self.client = openai.OpenAI(api_key= self.api_key)
-    models = self.client.models.list()
-    self.allowed_models = []
-    for model in models.data:
-      self.allowed_models.append(model.id)
+    try:
+      models = self.client.models.list()
+      self.allowed_models = []
+      for model in models.data:
+        self.allowed_models.append(model.id)
+    except Exception as e:
+      print(f"Error fetching models: {e}")
+      self.allowed_models = []
 
   def generate_response(self, request: OpenAiRequest) -> str:
     try:
@@ -49,7 +53,7 @@ class OpenAIClient(LLMClient):
       print(f"Failed to decode JSON: {e}")
       return []
     
-  def build_request(self, model:str, messages:list[OpenAiMessage], temperature:float, max_tokens:int, top_p:float, frequency_penalty:float, presence_penalty:float) -> OpenAiRequest:
+  def build_request(self, model:str, messages:list[OpenAiMessage], temperature:float, max_tokens:int, top_k:int, top_p:float, frequency_penalty:float, presence_penalty:float) -> OpenAiRequest:
     """
     Build the OpenAiRequest object.
     """
