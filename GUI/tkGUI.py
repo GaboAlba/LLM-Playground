@@ -67,8 +67,17 @@ class TkGui:
     self.PromptBox.bind("<FocusIn>", lambda event: self.on_focus_in())
     self.PromptBox.bind("<FocusOut>", lambda event: self.on_focus_out())
 
-    self.SubmitButton = Button(self.topLeftFrame, text="Submit", command=self.submit)
-    self.SubmitButton.pack(pady=20)
+    self.ButtonFrame = Frame(self.topLeftFrame)
+    self.SubmitButton = Button(self.ButtonFrame, text="Submit", command=self.submit)
+    self.SubmitButton.pack(side=BOTTOM, pady=20, padx=20)
+    self.UserRoleButton = Button(self.ButtonFrame, text="User Prompt", command=lambda: self.PromptBox.insert(END, "{{role user}}\nYour message here\n{{role/}}\n"))
+    self.UserRoleButton.pack(side=LEFT, padx=20, pady=20)
+    self.AssistantRoleButton = Button(self.ButtonFrame, text="Assistant Prompt", command=lambda: self.PromptBox.insert(END, "{{role assistant}}\nYour message here\n{{role/}}\n"))
+    self.AssistantRoleButton.pack(side=LEFT, padx=20, pady=20)
+    self.SystemRoleButton = Button(self.ButtonFrame, text="System Prompt", command=lambda: self.PromptBox.insert(END, "{{role system}}\nYour message here\n{{role/}}\n"))
+    self.SystemRoleButton.pack(side=LEFT, padx=20, pady=20)
+    self.ButtonFrame.pack(pady=20, fill=X)
+    self.SubmitButton.config(bg="green", fg="white", font=("Helvetica", 14), width=200)
 
     self.ResultBoxTitle = Label(self.bottomLeftFrame, text="Result", font=("Helvetica", 16))
     self.ResultBoxTitle.pack(pady=20, anchor=W)
@@ -162,10 +171,18 @@ class TkGui:
     if (type(selected_client) == OpenAIClient):
       self.TopKLabel.pack_forget()
       self.TopKSlider.pack_forget()
+      self.FrequencyPenaltyLabel.pack_forget()
+      self.FrequencyPenaltySlider.pack_forget()
+      self.PresencePenaltyLabel.pack_forget()
+      self.PresencePenaltySlider.pack_forget()
       self.TemperatureSlider.config(from_=0, to=1, resolution=0.1)
     elif (type(selected_client) == GoogleAiClient):
       self.TopKLabel.pack(pady=20)
       self.TopKSlider.pack()
+      self.FrequencyPenaltyLabel.pack(pady=20)
+      self.FrequencyPenaltySlider.pack()
+      self.PresencePenaltyLabel.pack(pady=20)
+      self.PresencePenaltySlider.pack()
       self.TemperatureSlider.config(from_=0, to=2, resolution=0.1)
 
   def on_focus_in(self):
