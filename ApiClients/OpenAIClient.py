@@ -24,17 +24,15 @@ class OpenAIClient(LLMClient):
       messages = []
       for msg in request.messages:
         messages.append(msg.to_dict())
-      response = self.client.chat.completions.create(
+      response = self.client.responses.create(
         model=request.model,
-        messages = messages,
+        input= messages,
         temperature = request.temperature,
-        max_completion_tokens = request.max_completion_tokens,
-        top_p = request.top_p,
-        frequency_penalty = request.frequency_penalty,
-        presence_penalty = request.presence_penalty
+        max_output_tokens = request.max_completion_tokens,
+        top_p = request.top_p
       )
 
-      return response.choices[0].message.content
+      return response.output[0].content[0].text
     except Exception as e:
       print(f"Call to OpenAI API failed: {e}")
       return ""
