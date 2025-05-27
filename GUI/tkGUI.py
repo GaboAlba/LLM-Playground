@@ -18,7 +18,6 @@ class TkGui:
     self.root = Tk()
     self.root.title("LLM Playground")
     self.root.geometry("1920x1080")
-    self.root.resizable(width=True, height=True)
 
     self.menubar = Menu(self.root)
     self.filemenu = Menu(self.menubar, tearoff=0)
@@ -29,15 +28,31 @@ class TkGui:
     self.root.config(menu=self.menubar)
 
     self.leftFrame = Frame(self.root)
-    self.leftFrame.pack(side=LEFT, fill=Y, padx=20, pady=30)
+    self.leftCanvas = Canvas(self.leftFrame)
+    self.leftFrameScrollbar = Scrollbar(self.leftFrame, command=self.leftCanvas.yview)
+    self.leftScrollableFrame = Frame(self.leftCanvas)
+
+    self.leftScrollableFrame.bind(
+      "<Configure>",
+      lambda e: self.leftCanvas.configure(
+        scrollregion=self.leftCanvas.bbox("all")
+      )
+    )
+
+    self.leftCanvas.create_window((0, 0), window=self.leftScrollableFrame, anchor="nw")
+    self.leftCanvas.configure(yscrollcommand=self.leftFrameScrollbar.set)
+  
+    self.leftFrame.pack(side=LEFT, fill=BOTH, expand=True)
+    self.leftCanvas.pack(side=LEFT, fill=BOTH, expand=True)
+    self.leftFrameScrollbar.pack(side=RIGHT, fill=Y)
 
     self.rightFrame = Frame(self.root)
     self.rightFrame.pack(side=RIGHT, fill=Y, padx=20, pady=100)
     
-    self.topLeftFrame = Frame(self.leftFrame)
+    self.topLeftFrame = Frame(self.leftScrollableFrame)
     self.topLeftFrame.pack(side=TOP, fill=X, padx=20, pady=30)
 
-    self.bottomLeftFrame = Frame(self.leftFrame)
+    self.bottomLeftFrame = Frame(self.leftScrollableFrame)
     self.bottomLeftFrame.pack(side=BOTTOM, fill=X, padx=20, pady=30)
 
     self.Title = Label(self.topLeftFrame, text="LLM Playground", font=("Helvetica", 24))
@@ -46,7 +61,7 @@ class TkGui:
     self.PromptBoxTitle = Label(self.topLeftFrame, text="Prompt", font=("Helvetica", 16))
     self.PromptBoxTitle.pack(pady=20, anchor=W)
     self.PromptBox = Text(self.topLeftFrame, height=30, width=200)
-    self.PromptBox.pack(pady=20)
+    self.PromptBox.pack(pady=20, padx=20, fill=X)
     self.PromptBox.insert(END, "Enter your prompt here...")
     self.PromptBox.config(state=NORMAL)
     self.PromptBox.bind("<FocusIn>", lambda event: self.on_focus_in())
@@ -58,7 +73,7 @@ class TkGui:
     self.ResultBoxTitle = Label(self.bottomLeftFrame, text="Result", font=("Helvetica", 16))
     self.ResultBoxTitle.pack(pady=20, anchor=W)
     self.ResultBox = Text(self.bottomLeftFrame, height=20, width=200)
-    self.ResultBox.pack(pady=20)
+    self.ResultBox.pack(pady=20, padx=20, fill=X)
     self.ResultBox.insert(END, "Result will be displayed here...")
     self.ResultBox.config(state=DISABLED)
     self.ResultBox.bind("<FocusIn>", lambda event: self.on_focus_in())
